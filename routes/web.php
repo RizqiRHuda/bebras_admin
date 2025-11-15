@@ -1,13 +1,14 @@
 <?php
 
+use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
-use App\Http\Controllers\Kegiatan\WorkshopController;
+use App\Http\Controllers\SoalController;
 use App\Http\Controllers\KontakController;
 use App\Http\Controllers\LatihanController;
 use App\Http\Controllers\RegisterController;
-use App\Http\Controllers\SoalController;
 use App\Http\Controllers\TentangBebrasController;
-use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Kegiatan\WorkshopController;
+use App\Http\Controllers\Kegiatan\PengumumanController;
 
 // Route::get('/', function () {
 //     return view('app');
@@ -75,6 +76,13 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
 
     Route::prefix('kegiatan')->group(function () {
         Route::get('/workshop', [WorkshopController::class, 'index'])->name('workshop.index');
+    });
+
+    Route::prefix('pengumuman')->group(function () {
+        Route::get('hasil-challenge', [PengumumanController::class, 'index'])->name('pengumuman.index');
+        Route::post('simpan-pengumuman', [PengumumanController::class, 'store'])->name('pengumuman.store');
+        Route::get('data-pengumuman', [PengumumanController::class, 'getData'])->name('pengumuman.data');
+
     });
 
 });

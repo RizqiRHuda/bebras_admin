@@ -5,7 +5,7 @@
                   <script>
                     document.write(new Date().getFullYear());
                   </script>
-                  , made with ❤️ by
+                  {{-- , made with ❤️ by
                   <a href="https://themeselection.com" target="_blank" class="footer-link fw-bolder">ThemeSelection</a>
                 </div>
                 <div>
@@ -24,7 +24,7 @@
                     target="_blank"
                     class="footer-link me-4"
                     >Support</a
-                  >
+                  > --}}
                 </div>
               </div>
             </footer>

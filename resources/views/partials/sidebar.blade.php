@@ -35,7 +35,7 @@
         </li>
         <li class="menu-item {{ Route::is('soal_bebras.index') ? 'active' : '' }}">
             <a href="{{ route('soal_bebras.index') }}" class="menu-link">
-                <i class="menu-icon tf-icons bx bx-book"></i> 
+                <i class="menu-icon tf-icons bx bx-book"></i>
                 <div data-i18n="Analytics">Soal Bebras</div>
             </a>
         </li>
@@ -63,6 +63,11 @@
                 <li class="menu-item {{ Request::is('kegiatan/workshop') ? 'active' : '' }}">
                     <a href="{{ route('workshop.index') }}" class="menu-link">
                         <div data-i18n="Without menu">Workshop</div>
+                    </a>
+                </li>
+                <li class="menu-item {{ Request::is('pengumuman*') ? 'active' : '' }}">
+                    <a href="{{ route('pengumuman.index') }}" class="menu-link">
+                        <div data-i18n="Without menu">Pengumuman Hasil</div>
                     </a>
                 </li>
 

@@ -8,6 +8,7 @@ use App\Http\Controllers\LatihanController;
 use App\Http\Controllers\RegisterController;
 use App\Http\Controllers\TentangBebrasController;
 use App\Http\Controllers\Kegiatan\WorkshopController;
+use App\Http\Controllers\Kegiatan\ChallengeController;
 use App\Http\Controllers\Kegiatan\PengumumanController;
 
 // Route::get('/', function () {
@@ -76,6 +77,18 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
 
     Route::prefix('kegiatan')->group(function () {
         Route::get('/workshop', [WorkshopController::class, 'index'])->name('workshop.index');
+        Route::get('/workshop-page', [WorkshopController::class, 'dataWorkshop'])->name('page_workhop.index');
+        Route::post('/simpan-workshop', [WorkshopController::class, 'store'])->name('workshop.store');
+        Route::get('/workshop-list', [WorkshopController::class, 'listWorkshop'])->name('workshop.list');
+        Route::get('/workshop/{id}/edit', [WorkshopController::class, 'edit'])->name('workshop.edit');
+        Route::put('/workshop/{id}', [WorkshopController::class, 'update'])->name('workshop.update');
+        Route::delete('/{id}', [WorkshopController::class, 'destroy'])->name('workshop.delete');
+
+        // bebras challenge
+        Route::get('/challenge-index', [ChallengeController::class, 'index'])->name('challenge.index');
+        Route::get('/form-challenge', [ChallengeController::class, 'create'])->name('form-challenge.index');
+        Route::post('/store-challenge', [ChallengeController::class, 'store'])->name('form-challange.store');
+
     });
 
     Route::prefix('pengumuman')->group(function () {

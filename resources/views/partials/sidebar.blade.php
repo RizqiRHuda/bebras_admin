@@ -60,11 +60,19 @@
                 <div data-i18n="Layouts">Kegiatan</div>
             </a>
             <ul class="menu-sub">
-                <li class="menu-item {{ Request::is('kegiatan/workshop') ? 'active' : '' }}">
-                    <a href="{{ route('workshop.index') }}" class="menu-link">
+                <li
+                    class="menu-item {{ Request::is('kegiatan/workshop*') || Request::is('kegiatan/workshop-page') ? 'active' : '' }}">
+                    <a href="{{ route('page_workhop.index') }}" class="menu-link">
                         <div data-i18n="Without menu">Workshop</div>
                     </a>
                 </li>
+
+                <li class="menu-item {{ Request::is('kegiatan/challenge-index') ? 'active' : '' }}">
+                    <a href="{{ route('challenge.index') }}" class="menu-link">
+                        <div data-i18n="Without menu">Bebras Challenge</div>
+                    </a>
+                </li>
+
                 <li class="menu-item {{ Request::is('pengumuman*') ? 'active' : '' }}">
                     <a href="{{ route('pengumuman.index') }}" class="menu-link">
                         <div data-i18n="Without menu">Pengumuman Hasil</div>

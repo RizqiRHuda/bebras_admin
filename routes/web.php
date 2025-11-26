@@ -1,15 +1,15 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
-use App\Http\Controllers\SoalController;
+use App\Http\Controllers\Kegiatan\ChallengeController;
+use App\Http\Controllers\Kegiatan\PengumumanController;
+use App\Http\Controllers\Kegiatan\WorkshopController;
 use App\Http\Controllers\KontakController;
 use App\Http\Controllers\LatihanController;
 use App\Http\Controllers\RegisterController;
+use App\Http\Controllers\SoalController;
 use App\Http\Controllers\TentangBebrasController;
-use App\Http\Controllers\Kegiatan\WorkshopController;
-use App\Http\Controllers\Kegiatan\ChallengeController;
-use App\Http\Controllers\Kegiatan\PengumumanController;
+use Illuminate\Support\Facades\Route;
 
 // Route::get('/', function () {
 //     return view('app');
@@ -87,7 +87,12 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
         // bebras challenge
         Route::get('/challenge-index', [ChallengeController::class, 'index'])->name('challenge.index');
         Route::get('/form-challenge', [ChallengeController::class, 'create'])->name('form-challenge.index');
-        Route::post('/store-challenge', [ChallengeController::class, 'store'])->name('form-challange.store');
+       Route::post('/store-challenge', [ChallengeController::class, 'store'])
+    ->name('form-challenge.store');
+        Route::get('/getData-challenge', [ChallengeController::class, 'getData'])->name('getData-challenge');
+        Route::get('/challenge/{id}/edit', [ChallengeController::class, 'edit'])->name('challenge.edit');
+        Route::put('/challenge/{id}', [ChallengeController::class, 'update'])->name('challenge.update');
+        Route::delete('/hapus-challenge/{id}', [ChallengeController::class, 'destroy'])->name('challenge.delete');
 
     });
 

@@ -2,6 +2,7 @@
 
 @section('content')
     <div class="container mt-4">
+       <x-breadcrumbs :items="$breadcrumbs" />
         <h3 class="mb-4">Tambah Bebras Challenge</h3>
         {{-- Alert Bootstrap --}}
         @if (session('success'))
@@ -37,55 +38,62 @@
         </div>
         <div class="card shadow-sm border-0 rounded-3">
             <div class="card-body p-4">
-                <form action="{{ route('form-challange.store') }}" method="POST" enctype="multipart/form-data">
+                <form action="{{ isset($data) ? route('challenge.update', $data->id) : route('form-challenge.store') }}"
+                    method="POST" enctype="multipart/form-data">
                     @csrf
+                    @if (isset($data))
+                        @method('PUT')
+                    @endif
+
                     <div class="mb-3">
                         <label class="form-label fw-bold">Tahun Event</label>
-                        <input type="number" name="tahun" class="form-control" placeholder="Contoh: 2025" min="2000"
-                            max="2100" value="{{ old('tahun') }}" required>
+                        <input type="number" name="tahun" class="form-control" placeholder="Contoh: 2025"
+                            value="{{ old('tahun', $data->tahun ?? '') }}" min="2000" max="2100" required>
                     </div>
-
 
                     <div class="mb-3">
                         <label class="form-label fw-bold">Judul</label>
                         <input type="text" name="title" class="form-control" placeholder="Judul konten..."
-                            value="{{ old('title') }}" required>
+                            value="{{ old('title', $data->title ?? '') }}" required>
                     </div>
-
 
                     <div class="mb-3">
                         <label class="form-label fw-bold">Tagline / Hashtag</label>
                         <input type="text" name="tagline" class="form-control"
-                            placeholder="#berprestasidarirumah #jujuritukeren" value="{{ old('tagline') }}">
+                            placeholder="#berprestasidarirumah #jujuritukeren"
+                            value="{{ old('tagline', $data->tagline ?? '') }}">
                     </div>
-
 
                     <div class="mb-3">
                         <label class="form-label fw-bold">Cover Image</label>
                         <input type="file" name="gambar" class="form-control">
                         <small class="text-muted">Format: JPG/PNG, Max 2MB</small>
+
+                        @if (isset($data) && $data->gambar)
+                            <div class="mt-2">
+                                <img src="{{ asset('storage/' . $data->gambar) }}" width="120" class="rounded" />
+                            </div>
+                        @endif
                     </div>
 
-                    {{-- JSON TABLE --}}
                     <div class="mb-3">
                         <label class="form-label fw-bold">Tabel (Opsional)</label>
-                        <textarea name="table_json" rows="4" class="form-control" placeholder='Contoh: [["Level","Jumlah"],["Mudah",5]]'>{{ old('table_json') }}</textarea>
+                        <textarea name="table_json" rows="4" class="form-control">{{ old('table_json', $data->table_json ?? '') }}</textarea>
                         <small class="text-muted">Isi dalam format JSON (opsional)</small>
                     </div>
 
-                    {{-- Content (TinyMCE) --}}
                     <div class="mb-3">
                         <label class="form-label fw-bold">Konten</label>
-                        <textarea id="editor" name="content" class="form-control tinymce-editor" rows="10">{{ old('content') }}</textarea>
+                        <textarea id="editor" name="content" class="form-control tinymce-editor" rows="10">{{ old('content', $data->content ?? '') }}</textarea>
                     </div>
 
-                    {{-- Submit --}}
                     <div class="d-flex justify-content-end mt-4">
                         <button type="submit" class="btn btn-primary px-4">
                             <i class="bx bx-save me-1"></i> Simpan
                         </button>
                     </div>
                 </form>
+
             </div>
         </div>
     </div>

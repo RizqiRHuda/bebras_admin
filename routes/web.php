@@ -100,7 +100,10 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
         Route::get('hasil-challenge', [PengumumanController::class, 'index'])->name('pengumuman.index');
         Route::post('simpan-pengumuman', [PengumumanController::class, 'store'])->name('pengumuman.store');
         Route::get('data-pengumuman', [PengumumanController::class, 'getData'])->name('pengumuman.data');
-
+        Route::get('show/{id}', [PengumumanController::class, 'show'])->name('pengumuman.show');
+        Route::get('edit/{id}', [PengumumanController::class, 'edit'])->name('pengumuman.edit');
+        Route::put('update/{id}', [PengumumanController::class, 'update'])->name('pengumuman.update');
+        Route::delete('hapus/{id}', [PengumumanController::class, 'destroy'])->name('pengumuman.destroy');
     });
 
 });

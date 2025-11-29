@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\BeritaController;
 use App\Http\Controllers\Kegiatan\ChallengeController;
 use App\Http\Controllers\Kegiatan\PengumumanController;
 use App\Http\Controllers\Kegiatan\WorkshopController;
@@ -87,8 +88,8 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
         // bebras challenge
         Route::get('/challenge-index', [ChallengeController::class, 'index'])->name('challenge.index');
         Route::get('/form-challenge', [ChallengeController::class, 'create'])->name('form-challenge.index');
-       Route::post('/store-challenge', [ChallengeController::class, 'store'])
-    ->name('form-challenge.store');
+        Route::post('/store-challenge', [ChallengeController::class, 'store'])
+            ->name('form-challenge.store');
         Route::get('/getData-challenge', [ChallengeController::class, 'getData'])->name('getData-challenge');
         Route::get('/challenge/{id}/edit', [ChallengeController::class, 'edit'])->name('challenge.edit');
         Route::put('/challenge/{id}', [ChallengeController::class, 'update'])->name('challenge.update');
@@ -106,4 +107,17 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
         Route::delete('hapus/{id}', [PengumumanController::class, 'destroy'])->name('pengumuman.destroy');
     });
 
+});
+
+Route::middleware(['auth', 'role:user'])->group(function () {
+    Route::get('/user/dashboard', fn() => view('user.dashboard'))->name('user.dashboard');
+    Route::prefix('berita')->group(function () {
+        Route::get('/', [BeritaController::class, 'index'])->name('berita.index');
+        Route::get('/form-berita', [BeritaController::class, 'create'])->name('form-berita.index');
+        Route::post('/simpan-berita', [BeritaController::class, 'store'])->name('berita.store');
+        Route::get('/data-berita', [BeritaController::class, 'dataBerita'])->name('data-berita.list');
+        Route::get('edit/{id}', [BeritaController::class, 'edit'])->name('berita.edit');
+        Route::put('update/{id}', [BeritaController::class, 'update'])->name('berita.update');
+        Route::delete('hapus/{id}', [BeritaController::class, 'destroy'])->name('berita.destroy');
+    });
 });

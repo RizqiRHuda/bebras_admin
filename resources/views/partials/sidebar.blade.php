@@ -20,7 +20,7 @@
     <div class="menu-inner-shadow"></div>
 
     <ul class="menu-inner py-1">
-        @if (auth()->user()->role === 'admin')
+        @if (auth()->user()->hasRole('admin'))
             <!-- Dashboard -->
             <li class="menu-item {{ Route::is('admin.dashboard') ? 'active' : '' }}">
                 <a href="{{ route('admin.dashboard') }}" class="menu-link">

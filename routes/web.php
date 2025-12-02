@@ -8,6 +8,7 @@ use App\Http\Controllers\Kegiatan\WorkshopController;
 use App\Http\Controllers\KontakController;
 use App\Http\Controllers\LatihanController;
 use App\Http\Controllers\RegisterController;
+use App\Http\Controllers\ReviewBeritaController;
 use App\Http\Controllers\SoalController;
 use App\Http\Controllers\TentangBebrasController;
 use Illuminate\Support\Facades\Route;
@@ -105,6 +106,14 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
         Route::get('edit/{id}', [PengumumanController::class, 'edit'])->name('pengumuman.edit');
         Route::put('update/{id}', [PengumumanController::class, 'update'])->name('pengumuman.update');
         Route::delete('hapus/{id}', [PengumumanController::class, 'destroy'])->name('pengumuman.destroy');
+    });
+
+    Route::prefix('review_berita')->group(function () {
+        Route::get('/', [ReviewBeritaController::class, 'index'])->name('review_berita.index');
+        Route::get('/data', [ReviewBeritaController::class, 'getData'])->name('review_berita.data');
+        Route::get('/detail/{id}', [ReviewBeritaController::class, 'tampilBerita'])->name('review_berita.detail');
+        Route::post('/submit/{id}', [ReviewBeritaController::class, 'submitReview'])->name('review_berita.submit');
+
     });
 
 });

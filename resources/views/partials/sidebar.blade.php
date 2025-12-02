@@ -80,7 +80,11 @@
                         </a>
                     </li>
 
-
+                     <li class="menu-item {{ Request::is('review*') ? 'active' : '' }}">
+                        <a href="{{ route('review_berita.index') }}" class="menu-link">
+                            <div data-i18n="Without menu">Review Berita</div>
+                        </a>
+                    </li>
                 </ul>
             </li>
 

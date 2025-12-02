@@ -3,7 +3,7 @@
 @section('content')
     <div class="container mt-4">
         <x-breadcrumbs :items="$breadcrumbs" />
-        <h3 class="mb-4">Bebras Challenge</h3>
+        <h3 class="mb-4">Berita Bebras</h3>
         <div class="col-md-12">
             {{-- Alert Bootstrap --}}
             @if (session('success'))

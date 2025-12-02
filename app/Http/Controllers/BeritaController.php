@@ -28,9 +28,7 @@ class BeritaController extends Controller
     {
         $berita = BeritaForm::with(['review' => function ($q) {
             $q->latest();
-        },
-            'user',
-        ])->get();
+        }, 'user'])->get();
 
         return datatables()->of($berita)
             ->addIndexColumn()
@@ -40,7 +38,6 @@ class BeritaController extends Controller
                     return '<span class="badge bg-secondary">Tidak ada</span>';
                 }
                 return '<img src="' . asset('storage/' . $row->gambar) . '" width="80">';
-
             })
             ->addColumn('status', fn($row) => ucfirst($row->status))
             ->addColumn('tanggal', function ($row) {
@@ -53,11 +50,31 @@ class BeritaController extends Controller
                 return $review ? ($review->note ?? '-') : '-';
             })
             ->addColumn('aksi', function ($row) {
-                $urlEdit = route('berita.edit', $row->id);
-                return '
-                <a href="' . $urlEdit . '" class="btn btn-sm btn-warning">Edit</a>
-                <button class="btn btn-sm btn-danger" onclick="hapusData(' . $row->id . ')">Hapus</button>
-            ';
+
+                $editDisabled   = '';
+                $deleteDisabled = '';
+                $reviewButton   = '';
+                if (auth()->user()->roles->first()->name == 'user') {
+                    if (in_array($row->status, ['published', 'approved'])) {
+                        $editDisabled   = 'disabled';
+                        $deleteDisabled = 'disabled';
+                    }
+
+                    return '
+                    <button class="btn btn-sm btn-warning" ' . $editDisabled . ' onclick="editData(' . $row->id . ')">Edit</button>
+                    <button class="btn btn-sm btn-danger" ' . $deleteDisabled . ' onclick="hapusData(' . $row->id . ')">Hapus</button>
+                ';
+                }
+
+
+                if (auth()->user()->role == 'admin') {
+                    if (! in_array($row->status, ['approved', 'rejected'])) {
+                        $reviewButton = '<button class="btn btn-success btn-sm review-btn" data-id="' . $row->id . '">Review</button>';
+                    }
+
+                    return $reviewButton;
+                }
+
             })
             ->rawColumns(['gambar', 'aksi'])
             ->make(true);

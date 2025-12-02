@@ -1,6 +1,7 @@
 <?php
 namespace App\Models\Berita;
 
+use App\Models\User;
 use App\Models\BeritaForm;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;

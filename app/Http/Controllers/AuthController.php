@@ -18,27 +18,27 @@ class AuthController extends Controller
             'password' => ['required'],
         ]);
 
-        if (Auth::attempt($credentials)) {
+        if (Auth::attempt($credentials, $request->filled('remember'))) {
             $request->session()->regenerate();
 
             $user = Auth::user();
 
             // cek role
             if ($user->hasRole('admin')) {
-                return redirect()->route('admin.dashboard');
+                return redirect()->intended(route('admin.dashboard'));
             } elseif ($user->hasRole('user')) {
-                return redirect()->route('user.dashboard');
+                return redirect()->intended(route('user.dashboard'));
             }
 
             Auth::logout();
             return redirect()->route('login')->withErrors([
-                'email' => 'Role tidak dikenali.',
+                'username' => 'Role tidak dikenali.',
             ]);
         }
 
         return back()->withErrors([
-            'email' => 'Email atau password salah.',
-        ])->onlyInput('email');
+            'username' => 'Username atau password salah.',
+        ])->onlyInput('username');
     }
 
     public function logout(Request $request)

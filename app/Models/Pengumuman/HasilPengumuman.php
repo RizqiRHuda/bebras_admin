@@ -106,7 +106,7 @@ class HasilPengumuman extends Model
     public function getFileUrlAttribute()
     {
         if ($this->is_uploaded && $this->file_path) {
-            return Storage::url($this->file_path);
+            return Storage::disk('public')->url($this->file_path);
         }
         return null;
     }
@@ -120,7 +120,7 @@ class HasilPengumuman extends Model
 
         static::deleting(function ($model) {
             if ($model->is_uploaded && $model->file_path) {
-                Storage::delete($model->file_path);
+                Storage::disk('public')->delete($model->file_path);
             }
         });
     }

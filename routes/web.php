@@ -113,7 +113,16 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
         Route::get('/data', [ReviewBeritaController::class, 'getData'])->name('review_berita.data');
         Route::get('/detail/{id}', [ReviewBeritaController::class, 'tampilBerita'])->name('review_berita.detail');
         Route::post('/submit/{id}', [ReviewBeritaController::class, 'submitReview'])->name('review_berita.submit');
+    });
 
+    // Hasil Pengumuman Management (untuk embed/link)
+    Route::prefix('hasil-pengumuman')->name('admin.pengumuman.hasil.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\HasilPengumumanController::class, 'index'])->name('index');
+        Route::get('/create', [\App\Http\Controllers\HasilPengumumanController::class, 'create'])->name('create');
+        Route::post('/', [\App\Http\Controllers\HasilPengumumanController::class, 'store'])->name('store');
+        Route::get('/{hasil}/edit', [\App\Http\Controllers\HasilPengumumanController::class, 'edit'])->name('edit');
+        Route::put('/{hasil}', [\App\Http\Controllers\HasilPengumumanController::class, 'update'])->name('update');
+        Route::delete('/{hasil}', [\App\Http\Controllers\HasilPengumumanController::class, 'destroy'])->name('destroy');
     });
 
 });

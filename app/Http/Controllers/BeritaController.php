@@ -37,8 +37,10 @@ class BeritaController extends Controller
                 if (! $row->gambar) {
                     return '<span class="badge bg-secondary">Tidak ada</span>';
                 }
-                return '<img src="' . asset('storage/' . $row->gambar) . '" width="80">';
+
+                return '<img src="' . $row->gambar . '" width="80" />';
             })
+
             ->addColumn('status', fn($row) => ucfirst($row->status))
             ->addColumn('tanggal', function ($row) {
                 return $row->created_at
@@ -65,7 +67,6 @@ class BeritaController extends Controller
                     <button class="btn btn-sm btn-danger" ' . $deleteDisabled . ' onclick="hapusData(' . $row->id . ')">Hapus</button>
                 ';
                 }
-
 
                 if (auth()->user()->role == 'admin') {
                     if (! in_array($row->status, ['approved', 'rejected'])) {
@@ -105,9 +106,12 @@ class BeritaController extends Controller
                 $slug = $originalSlug . '-' . $counter++;
             }
 
+            $gambarUrl = null;
+
             $gambarPath = null;
             if ($request->hasFile('gambar')) {
                 $gambarPath = $request->file('gambar')->store('berita', 'public');
+                $gambarUrl  = url('storage/' . $gambarPath);
             }
 
             BeritaForm::create([
@@ -115,7 +119,7 @@ class BeritaController extends Controller
                 'title'   => $request->title,
                 'slug'    => $slug,
                 'konten'  => $request->konten,
-                'gambar'  => $gambarPath,
+                'gambar'  => $gambarUrl,
                 'status'  => 'submitted',
             ]);
 

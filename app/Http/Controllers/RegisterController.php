@@ -19,7 +19,7 @@ class RegisterController extends Controller
     public function getAkun(Request $request)
     {
         if ($request->ajax()) {
-            $users = User::with('roles')->select('users.*'); // ambil user dengan relasi role
+            $users = User::with('roles')->select('users.*');
             return DataTables::of($users)
                 ->addIndexColumn()
                 ->addColumn('role', function ($row) {
@@ -38,25 +38,27 @@ class RegisterController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name'     => 'required|string|max:255',
-            'username' => 'required|string|max:255|unique:users,username',
-            'email'    => 'required|email|unique:users,email',
-            'password' => 'required',
-            'roles'    => 'required',
+            'name'      => 'required|string|max:255',
+            'username'  => 'required|string|max:255|unique:users,username',
+            'email'     => 'required|email|unique:users,email',
+            'password'  => 'required',
+            'nama_biro' => 'nullable',
+            'roles'     => 'required',
         ]);
 
         $user = User::create([
-            'name'     => $request->name,
-            'username' => $request->username,
-            'email'    => $request->email,
-            'password' => Hash::make($request->password),
+            'name'      => $request->name,
+            'username'  => $request->username,
+            'email'     => $request->email,
+            'nama_biro' => $request->nama_biro,
+            'password'  => Hash::make($request->password),
         ]);
 
         $user->roles()->attach($request->roles);
-         return response()->json([
-        'message' => 'Akun berhasil ditambahkan!',
-        'data'    => $user
-    ]);
+        return response()->json([
+            'message' => 'Akun berhasil ditambahkan!',
+            'data'    => $user,
+        ]);
     }
 
     public function edit($id)
@@ -80,9 +82,10 @@ class RegisterController extends Controller
             'password' => 'nullable|min:6',
         ]);
 
-        $user->name     = $request->name;
-        $user->username = $request->username;
-        $user->email    = $request->email;
+        $user->name      = $request->name;
+        $user->username  = $request->username;
+        $user->email     = $request->email;
+        $user->nama_biro = $request->nama_biro;
 
         if ($request->filled('password')) {
             $user->password = Hash::make($request->password);
@@ -98,21 +101,21 @@ class RegisterController extends Controller
 
     }
 
-   public function destroy(User $user)
-{
-    try {
-        $user->delete();
+    public function destroy(User $user)
+    {
+        try {
+            $user->delete();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'User berhasil dihapus.'
-        ]);
-    } catch (\Exception $e) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Gagal menghapus user!'
-        ], 500);
+            return response()->json([
+                'success' => true,
+                'message' => 'User berhasil dihapus.',
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menghapus user!',
+            ], 500);
+        }
     }
-}
 
 }

@@ -42,6 +42,13 @@
                     </div>
 
                     <div class="row mb-3">
+                        <label class="col-sm-2 col-form-label">Nama Biro</label>
+                        <div class="col-sm-10">
+                            <input type="text" name="nama_biro" id="edit_nama_biro" class="form-control">
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
                         <label class="col-sm-2 col-form-label">Password</label>
                         <div class="col-sm-10">
                             <input type="password" name="password" id="edit_password" class="form-control"

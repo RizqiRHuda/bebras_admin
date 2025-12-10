@@ -18,8 +18,7 @@
         <div class="card shadow-sm border-0 mb-4">
             @if ($berita->gambar)
                 <div class="mb-4 text-center mt-2">
-                    <img src="{{ asset('storage/' . $berita->gambar) }}" class="img-fluid rounded shadow-sm"
-                        style="max-height: 250px; object-fit: cover;">
+                 <img src="{{ $berita->gambar }}" class="img-fluid rounded shadow-sm" style="max-height: 250px; object-fit: cover;">
                 </div>
             @endif
             <div class="card-body" style="line-height: 1.8; font-size: 1rem;">

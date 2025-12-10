@@ -30,6 +30,19 @@ class BeritaController extends Controller
             $q->latest();
         }, 'user'])->get();
 
+        $query = BeritaForm::with([
+            'review' => function ($q) {
+                $q->latest();
+            },
+            'user',
+        ]);
+
+        if (auth()->user()->roles->first()->name == 'user') {
+            $query->where('user_id', auth()->id());
+        }
+
+        $berita = $query->get();
+
         return datatables()->of($berita)
             ->addIndexColumn()
             ->addColumn('judul', fn($row) => $row->title)
@@ -53,22 +66,22 @@ class BeritaController extends Controller
             })
             ->addColumn('aksi', function ($row) {
 
-                $editDisabled   = '';
-                $deleteDisabled = '';
-                $reviewButton   = '';
-                if (auth()->user()->roles->first()->name == 'user') {
+                $role = auth()->user()->roles->first()->name;
+                if ($role != 'admin') {
+                    $editDisabled   = '';
+                    $deleteDisabled = '';
                     if (in_array($row->status, ['published', 'approved'])) {
                         $editDisabled   = 'disabled';
                         $deleteDisabled = 'disabled';
                     }
-
                     return '
-                    <button class="btn btn-sm btn-warning" ' . $editDisabled . ' onclick="editData(' . $row->id . ')">Edit</button>
-                    <button class="btn btn-sm btn-danger" ' . $deleteDisabled . ' onclick="hapusData(' . $row->id . ')">Hapus</button>
-                ';
+                        <button class="btn btn-sm btn-warning" ' . $editDisabled . ' onclick="editData(' . $row->id . ')">Edit</button>
+                        <button class="btn btn-sm btn-danger" ' . $deleteDisabled . ' onclick="hapusData(' . $row->id . ')">Hapus</button>
+                    ';
                 }
 
-                if (auth()->user()->role == 'admin') {
+                if ($role == 'admin') {
+                    $reviewButton = '';
                     if (! in_array($row->status, ['approved', 'rejected'])) {
                         $reviewButton = '<button class="btn btn-success btn-sm review-btn" data-id="' . $row->id . '">Review</button>';
                     }
@@ -76,7 +89,9 @@ class BeritaController extends Controller
                     return $reviewButton;
                 }
 
+                return '-';
             })
+
             ->rawColumns(['gambar', 'aksi'])
             ->make(true);
     }
@@ -158,34 +173,39 @@ class BeritaController extends Controller
 
         try {
             $berita = BeritaForm::findOrFail($id);
-            $slug   = Str::slug($request->title);
+
+            $slug = Str::slug($request->title);
             if ($slug !== $berita->slug) {
                 $originalSlug = $slug;
                 $counter      = 1;
+
                 while (BeritaForm::where('slug', $slug)->where('id', '!=', $id)->exists()) {
                     $slug = $originalSlug . '-' . $counter++;
                 }
-            } else {
-                $slug = $berita->slug;
             }
 
-            if ($request->hasFile('gambar')) {
+            $gambarUrl = $berita->gambar;
 
-                if ($berita->gambar && Storage::disk('public')->exists($berita->gambar)) {
-                    Storage::disk('public')->delete($berita->gambar);
+            // Jika ada gambar baru
+            if ($request->hasFile('gambar')) {
+                if ($berita->gambar) {
+                    $oldPath = str_replace(url('storage') . '/', '', $berita->gambar);
+
+                    if (Storage::disk('public')->exists($oldPath)) {
+                        Storage::disk('public')->delete($oldPath);
+                    }
                 }
 
                 $gambarPath = $request->file('gambar')->store('berita', 'public');
-            } else {
-
-                $gambarPath = $berita->gambar;
+                $gambarUrl  = url('storage/' . $gambarPath);
             }
 
+            // Update data
             $berita->update([
                 'title'  => $request->title,
                 'slug'   => $slug,
                 'konten' => $request->konten,
-                'gambar' => $gambarPath,
+                'gambar' => $gambarUrl,
             ]);
 
             DB::commit();

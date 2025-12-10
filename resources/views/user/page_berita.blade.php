@@ -86,6 +86,12 @@
                 })
             })
 
+            function editData(id) {
+                let url = "{{ route('berita.edit', ':id') }}";
+                url = url.replace(':id', id);
+                window.location.href = url;
+            }
+
             function hapusData(id) {
                 Swal.fire({
                     title: 'Yakin ingin menghapus?',

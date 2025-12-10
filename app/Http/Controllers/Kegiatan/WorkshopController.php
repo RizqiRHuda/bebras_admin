@@ -91,9 +91,11 @@ class WorkshopController extends Controller
             );
 
             // Upload gambar jika ada
+            $gambarUrl = null;
             $gambarPath = null;
             if ($request->hasFile('gambar')) {
                 $gambarPath = $request->file('gambar')->store('workshop/gambar', 'public');
+                $gambarUrl = url('storage/' . $gambarPath );
             }
 
             // Konten JSON
@@ -105,7 +107,7 @@ class WorkshopController extends Controller
                 'title'    => $request->title,
                 'lokasi'   => $request->lokasi,
                 'tanggal'  => $request->tanggal,
-                'gambar'   => $gambarPath,
+                'gambar'   => $gambarUrl,
                 'konten'   => $konten,
             ]);
 

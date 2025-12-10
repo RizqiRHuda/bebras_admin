@@ -1,17 +1,18 @@
 <?php
 
+use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\SoalController;
 use App\Http\Controllers\BeritaController;
-use App\Http\Controllers\Kegiatan\ChallengeController;
-use App\Http\Controllers\Kegiatan\PengumumanController;
-use App\Http\Controllers\Kegiatan\WorkshopController;
 use App\Http\Controllers\KontakController;
 use App\Http\Controllers\LatihanController;
 use App\Http\Controllers\RegisterController;
 use App\Http\Controllers\ReviewBeritaController;
-use App\Http\Controllers\SoalController;
 use App\Http\Controllers\TentangBebrasController;
-use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\UserDashboardController;
+use App\Http\Controllers\Kegiatan\WorkshopController;
+use App\Http\Controllers\Kegiatan\ChallengeController;
+use App\Http\Controllers\Kegiatan\PengumumanController;
 
 // Route::get('/', function () {
 //     return view('app');
@@ -127,8 +128,10 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
 
 });
 
-Route::middleware(['auth', 'role:user'])->group(function () {
-    Route::get('/user/dashboard', fn() => view('user.dashboard'))->name('user.dashboard');
+Route::middleware(['auth', 'nonadmin'])->group(function () {
+    // Route::get('/user/dashboard', fn() => view('user.dashboard'))->name('user.dashboard');
+    Route::get('/user/dashboard', [UserDashboardController::class, 'index'])->name('user.dashboard');
+
     Route::prefix('berita')->group(function () {
         Route::get('/', [BeritaController::class, 'index'])->name('berita.index');
         Route::get('/form-berita', [BeritaController::class, 'create'])->name('form-berita.index');
@@ -139,3 +142,4 @@ Route::middleware(['auth', 'role:user'])->group(function () {
         Route::delete('hapus/{id}', [BeritaController::class, 'destroy'])->name('berita.destroy');
     });
 });
+

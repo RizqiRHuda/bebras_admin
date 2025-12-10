@@ -74,7 +74,7 @@
                             <label class="form-label">Gambar (Opsional)</label>
                             @if (isset($data->gambar))
                                 <div class="mb-2">
-                                    <img src="{{ asset('storage/' . $data->gambar) }}" width="100">
+                                 <img src="{{ $data->gambar }}" width="100">
                                 </div>
                             @endif
 

@@ -18,7 +18,8 @@
         <div class="card shadow-sm border-0 mb-4">
             @if ($berita->gambar)
                 <div class="mb-4 text-center mt-2">
-                 <img src="{{ $berita->gambar }}" class="img-fluid rounded shadow-sm" style="max-height: 250px; object-fit: cover;">
+                    <img src="{{ $berita->gambar }}" class="img-fluid rounded shadow-sm"
+                        style="max-height: 250px; object-fit: cover;">
                 </div>
             @endif
             <div class="card-body" style="line-height: 1.8; font-size: 1rem;">
@@ -65,16 +66,25 @@
                 <textarea name="note" class="form-control" rows="4" placeholder="Tulis catatan tambahan..."></textarea>
             </div>
 
-            <div class="d-flex gap-2">
-                <button type="submit" name="status" value="approved" class="btn btn-success px-4">
-                    ✔ Setujui
-                </button>
+            <div class="d-flex justify-content-between align-items-center">
 
-                <button type="submit" name="status" value="rejected" class="btn btn-danger px-4">
-                    ✘ Tolak
-                </button>
+                <!-- Tombol Setujui & Tolak -->
+                <div class="d-flex gap-2">
+                    <button type="submit" name="status" value="approved" class="btn btn-success px-4">
+                        ✔ Setujui
+                    </button>
+
+                    <button type="submit" name="status" value="rejected" class="btn btn-danger px-4">
+                        ✘ Tolak
+                    </button>
+                </div>
+
+                <!-- Tombol Kembali di pojok kanan -->
+                <a href="{{ url()->previous() }}" class="btn btn-secondary px-4">
+                    Kembali
+                </a>
+
             </div>
-
         </form>
 
     </div>

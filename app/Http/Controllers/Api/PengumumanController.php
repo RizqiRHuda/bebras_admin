@@ -3,109 +3,24 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Pengumuman\TahunPengumuman;
 use App\Models\Pengumuman\HasilPengumuman;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
+/**
+ * API Controller untuk Akses File Pengumuman
+ * 
+ * API ini HANYA menyediakan akses ke file (download & view URL)
+ * Data lainnya diambil langsung dari database yang sama oleh projek publik
+ */
 class PengumumanController extends Controller
 {
-    /**
-     * Mendapatkan daftar tahun pengumuman yang tersedia
-     * Untuk ditampilkan di navbar
-     * 
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function getTahunList()
-    {
-        try {
-            $tahunList = TahunPengumuman::orderBy('tahun', 'desc')
-                ->pluck('tahun')
-                ->toArray();
-
-            return response()->json([
-                'success' => true,
-                'data' => $tahunList,
-                'message' => 'Daftar tahun pengumuman berhasil diambil'
-            ], 200);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Gagal mengambil daftar tahun: ' . $e->getMessage()
-            ], 500);
-        }
-    }
 
     /**
-     * Mendapatkan hasil pengumuman berdasarkan tahun
-     * Mengembalikan data dengan format embed yang sesuai per platform
+     * Download file Excel hasil pengumuman
+     * GET /api/files/download/{id}
      * 
-     * @param string $tahun
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function getHasilByTahun($tahun)
-    {
-        try {
-            // Cari tahun pengumuman
-            $tahunPengumuman = TahunPengumuman::where('tahun', $tahun)->first();
-
-            if (!$tahunPengumuman) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Tahun pengumuman tidak ditemukan'
-                ], 404);
-            }
-
-            // Ambil hasil pengumuman untuk tahun tersebut dengan relasi kategori
-            $hasilPengumuman = HasilPengumuman::where('id_tahun', $tahunPengumuman->id)
-                ->with('kategori')
-                ->get()
-                ->map(function ($hasil) {
-                    return [
-                        'id' => $hasil->id,
-                        'description' => $hasil->description,
-                        'kategori' => $hasil->kategori ? $hasil->kategori->nama_kategori : null,
-                        'platform' => $hasil->platform,
-                        'embed_url' => $hasil->embed_url,
-                        'is_uploaded' => $hasil->is_uploaded,
-                        
-                        // Informasi tambahan untuk handling di frontend
-                        'can_embed' => $this->canEmbed($hasil->platform, $hasil->is_uploaded),
-                        'download_url' => $hasil->is_uploaded ? route('api.pengumuman.download', $hasil->id) : null,
-                        'view_url' => $this->getViewUrl($hasil),
-                        
-                        // Info file untuk uploaded files
-                        'file_name' => $hasil->is_uploaded && $hasil->file_path ? basename($hasil->file_path) : null,
-                        'file_size' => $hasil->is_uploaded && $hasil->file_path && Storage::disk('public')->exists($hasil->file_path) 
-                            ? Storage::disk('public')->size($hasil->file_path) 
-                            : null,
-                        
-                        'created_at' => $hasil->created_at,
-                        'updated_at' => $hasil->updated_at,
-                    ];
-                });
-
-            return response()->json([
-                'success' => true,
-                'data' => [
-                    'tahun' => $tahun,
-                    'hasil_pengumuman' => $hasilPengumuman
-                ],
-                'message' => 'Data hasil pengumuman berhasil diambil'
-            ], 200);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Gagal mengambil data hasil pengumuman: ' . $e->getMessage()
-            ], 500);
-        }
-    }
-
-    /**
-     * Download file hasil pengumuman
-     * Khusus untuk file yang di-upload
-     * 
-     * @param int $id
+     * @param int $id - ID hasil_pengumuman dari database
      * @return \Symfony\Component\HttpFoundation\BinaryFileResponse|\Illuminate\Http\JsonResponse
      */
     public function downloadFile($id)
@@ -117,19 +32,15 @@ class PengumumanController extends Controller
             if (!$hasil->is_uploaded || !$hasil->file_path) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'File tidak tersedia untuk download'
+                    'message' => 'File tidak tersedia untuk download. File ini mungkin tersimpan di platform eksternal (Google Sheets/OneDrive).'
                 ], 404);
             }
 
-            // Cek apakah file ada di storage (gunakan disk 'public')
+            // Cek apakah file ada di storage
             if (!Storage::disk('public')->exists($hasil->file_path)) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'File tidak ditemukan di storage',
-                    'debug' => [
-                        'file_path' => $hasil->file_path,
-                        'full_path' => Storage::disk('public')->path($hasil->file_path)
-                    ]
+                    'message' => 'File tidak ditemukan di storage'
                 ], 404);
             }
 
@@ -137,6 +48,12 @@ class PengumumanController extends Controller
             $fileName = basename($hasil->file_path);
             
             return Storage::disk('public')->download($hasil->file_path, $fileName);
+            
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Data hasil pengumuman tidak ditemukan'
+            ], 404);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -146,60 +63,197 @@ class PengumumanController extends Controller
     }
 
     /**
-     * Helper: Cek apakah platform bisa di-embed
+     * View/Stream file untuk embed
+     * GET /api/files/view/{id}
      * 
-     * @param string|null $platform
-     * @param bool $isUploaded
-     * @return bool
+     * Mengembalikan file binary atau redirect ke URL eksternal
+     * 
+     * @param int $id - ID hasil_pengumuman dari database
+     * @return \Symfony\Component\HttpFoundation\BinaryFileResponse|\Illuminate\Http\RedirectResponse|\Illuminate\Http\JsonResponse
      */
-    private function canEmbed($platform, $isUploaded)
+    public function getFileUrl($id)
     {
-        // Google Sheets bisa di-embed dengan iframe
-        if ($platform === 'google_sheets') {
-            return true;
-        }
+        try {
+            $hasil = HasilPengumuman::findOrFail($id);
 
-        // File upload TIDAK bisa di-embed dengan iframe
-        // Excel file tidak bisa di-render di browser secara langsung
-        // Hanya bisa di-download
-        if ($isUploaded) {
-            return true;
-        }
+            // Untuk Google Sheets - redirect ke URL
+            if ($hasil->platform === 'google_sheets') {
+                return redirect($hasil->embed_url);
+            } 
+            // Untuk Excel Online - redirect ke URL
+            elseif ($hasil->platform === 'excel_online') {
+                return redirect($hasil->embed_url);
+            }
+            // Untuk OneDrive - redirect ke URL
+            elseif ($hasil->platform === 'onedrive') {
+                return redirect($hasil->embed_url);
+            }
+            // Untuk file upload Excel - stream file langsung
+            elseif ($hasil->is_uploaded && $hasil->file_path) {
+                if (!Storage::disk('public')->exists($hasil->file_path)) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'File tidak ditemukan di storage'
+                    ], 404);
+                }
 
-        // OneDrive dan Excel Online tidak bisa di-embed karena CORS
-        // Akan menggunakan redirect link
-        if (in_array($platform, ['onedrive', 'excel_online', 'uploaded'])) {
-            return false;
-        }
+                // Stream file dengan headers yang benar untuk preview
+                $filePath = Storage::disk('public')->path($hasil->file_path);
+                $fileName = basename($hasil->file_path);
+                
+                return response()->file($filePath, [
+                    'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                    'Content-Disposition' => 'inline; filename="' . $fileName . '"',
+                    'Access-Control-Allow-Origin' => '*',
+                    'Access-Control-Allow-Methods' => 'GET',
+                ]);
+                
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'URL tidak tersedia untuk hasil pengumuman ini'
+                ], 404);
+            }
 
-        return false;
+            
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Data hasil pengumuman tidak ditemukan'
+            ], 404);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil URL file: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
-     * Helper: Dapatkan URL untuk view/redirect
+     * Get file info dalam format JSON (untuk metadata)
+     * GET /api/files/info/{id}
      * 
-     * @param HasilPengumuman $hasil
-     * @return string|null
+     * @param int $id - ID hasil_pengumuman dari database
+     * @return \Illuminate\Http\JsonResponse
      */
-    private function getViewUrl($hasil)
+    public function getFileInfo($id)
     {
-        // Untuk OneDrive dan Excel Online, return URL langsung untuk redirect
-        if (in_array($hasil->platform, ['onedrive', 'excel_online'])) {
-            return $hasil->embed_url;
-        }
+        try {
+            $hasil = HasilPengumuman::findOrFail($id);
 
-        // Untuk Google Sheets, return embed URL (bisa di-embed dengan iframe)
-        if ($hasil->platform === 'google_sheets') {
-            return $hasil->embed_url;
-        }
+            $data = [
+                'id' => $hasil->id,
+                'platform' => $hasil->platform,
+                'is_uploaded' => $hasil->is_uploaded,
+                'can_embed' => false,
+                'view_url' => route('api.files.view', $hasil->id),
+                'download_url' => null,
+            ];
 
-        // Untuk file upload, return NULL
-        // File Excel tidak bisa di-preview di browser, hanya bisa di-download
-        // Frontend harus menampilkan info file dan button download
-        if ($hasil->is_uploaded && $hasil->file_path) {
-            return Storage::disk('public')->url($hasil->file_path);;
-        }
+            // Untuk Google Sheets
+            if ($hasil->platform === 'google_sheets') {
+                $data['can_embed'] = true;
+                $data['external_url'] = $hasil->embed_url;
+            } 
+            // Untuk Excel Online
+            elseif ($hasil->platform === 'excel_online') {
+                $data['can_embed'] = true;
+                $data['external_url'] = $hasil->embed_url;
+            }
+            // Untuk OneDrive
+            elseif ($hasil->platform === 'onedrive') {
+                $data['can_embed'] = false;
+                $data['external_url'] = $hasil->embed_url;
+            }
+            // Untuk file upload
+            elseif ($hasil->is_uploaded && $hasil->file_path) {
+                if (Storage::disk('public')->exists($hasil->file_path)) {
+                    $data['can_embed'] = true;
+                    $data['file_name'] = basename($hasil->file_path);
+                    $data['file_size'] = Storage::disk('public')->size($hasil->file_path);
+                    $data['download_url'] = route('api.files.download', $hasil->id);
+                } else {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'File tidak ditemukan di storage'
+                    ], 404);
+                }
+            }
 
-        return null;
+            return response()->json([
+                'success' => true,
+                'data' => $data
+            ]);
+            
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Data hasil pengumuman tidak ditemukan'
+            ], 404);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil info file: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Check if file exists dan info file
+     * GET /api/files/check/{id}
+     * 
+     * @param int $id - ID hasil_pengumuman dari database
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function checkFile($id)
+    {
+        try {
+            $hasil = HasilPengumuman::findOrFail($id);
+
+            $exists = false;
+            $fileInfo = null;
+
+            // Check file upload
+            if ($hasil->is_uploaded && $hasil->file_path) {
+                $exists = Storage::disk('public')->exists($hasil->file_path);
+                if ($exists) {
+                    $fileInfo = [
+                        'name' => basename($hasil->file_path),
+                        'size' => Storage::disk('public')->size($hasil->file_path),
+                        'path' => $hasil->file_path,
+                        'url' => Storage::disk('public')->url($hasil->file_path),
+                    ];
+                }
+            }
+            // Check external URL
+            elseif (!empty($hasil->embed_url)) {
+                $exists = true;
+                $fileInfo = [
+                    'url' => $hasil->embed_url,
+                    'platform' => $hasil->platform,
+                ];
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'exists' => $exists,
+                    'platform' => $hasil->platform,
+                    'is_uploaded' => $hasil->is_uploaded,
+                    'file_info' => $fileInfo,
+                ]
+            ]);
+            
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Data hasil pengumuman tidak ditemukan'
+            ], 404);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memeriksa file: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

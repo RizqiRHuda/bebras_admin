@@ -105,7 +105,7 @@
                             @if (isset($data) && $data->gambar)
                                 <div class="mt-2">
                                     <strong>Gambar Saat Ini:</strong><br>
-                                    <img src="{{ asset('storage/' . $data->gambar) }}" alt="Preview Gambar" width="150"
+                                    <img src="{{  $data->gambar }}" alt="Preview Gambar" width="150"
                                         style="border-radius: 10px; object-fit:cover;">
                                 </div>
                             @endif

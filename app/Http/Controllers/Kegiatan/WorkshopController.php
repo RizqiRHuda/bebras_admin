@@ -46,26 +46,30 @@ class WorkshopController extends Controller
                 return $row->tahun ? $row->tahun->tahun : '-';
             })
             ->addColumn('gambar', function ($row) {
+
                 if (! $row->gambar) {
                     return '<span class="badge bg-secondary">Tidak ada</span>';
                 }
 
-                $url = asset('storage/' . $row->gambar);
-                return '<img src="' . $url . '" alt="gambar" width="70" height="70" style="object-fit:cover; border-radius:6px;">';
+                $url = $row->gambar;
+
+                return '<img src="' . $url . '" alt="gambar" width="70" height="70"
+                    style="object-fit:cover; border-radius:6px;">';
             })
             ->addColumn('tanggal', function ($row) {
-                return Carbon::parse($row->tanggal)->format('d-m-Y');
+                return $row->tanggal
+                    ? Carbon::parse($row->tanggal)->format('d-m-Y')
+                    : '-';
             })
-
             ->addColumn('aksi', function ($row) {
                 $urlEdit = route('workshop.edit', $row->id);
+
                 return '
                 <a href="' . $urlEdit . '" class="btn btn-sm btn-warning">Edit</a>
-                <button class="btn btn-sm btn-danger" onclick="hapusData('.$row->id.')">Hapus</button>
+                <button class="btn btn-sm btn-danger" onclick="hapusData(' . $row->id . ')">Hapus</button>
             ';
             })
-
-            ->rawColumns(['aksi', 'gambar', 'tanggal'])
+            ->rawColumns(['aksi', 'gambar'])
             ->make(true);
     }
 
@@ -91,11 +95,11 @@ class WorkshopController extends Controller
             );
 
             // Upload gambar jika ada
-            $gambarUrl = null;
+            $gambarUrl  = null;
             $gambarPath = null;
             if ($request->hasFile('gambar')) {
                 $gambarPath = $request->file('gambar')->store('workshop/gambar', 'public');
-                $gambarUrl = url('storage/' . $gambarPath );
+                $gambarUrl  = url('storage/' . $gambarPath);
             }
 
             // Konten JSON
@@ -137,34 +141,51 @@ class WorkshopController extends Controller
     public function update(Request $request, $id)
     {
         $request->validate([
-            'tahun' => 'required|integer|digits:4',
-            'title' => 'required|string|max:255',
+            'tahun'   => 'required|integer|digits:4',
+            'title'   => 'required|string|max:255',
+            'lokasi'  => 'nullable|string|max:255',
+            'tanggal' => 'nullable|date',
+            'gambar'  => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'konten'  => 'nullable',
         ]);
 
         DB::beginTransaction();
+
         try {
-            $workshop      = Workshop::findOrFail($id);
+            $workshop = Workshop::findOrFail($id);
+
             $tahunWorkshop = TahunWorkshop::firstOrCreate(
                 ['tahun' => $request->tahun],
                 ['slug' => Str::slug($request->tahun)]
             );
 
-            $gambarPath = $workshop->gambar;
+            $gambarUrl = $workshop->gambar;
 
             if ($request->hasFile('gambar')) {
-                if ($workshop->gambar && Storage::disk('public')->exists($workshop->gambar)) {
-                    Storage::disk('public')->delete($workshop->gambar);
+                if ($workshop->gambar) {
+                    $oldPath = str_replace(url('storage') . '/', '', $workshop->gambar);
+
+                    if (Storage::disk('public')->exists($oldPath)) {
+                        Storage::disk('public')->delete($oldPath);
+                    }
                 }
+
                 $gambarPath = $request->file('gambar')->store('workshop/gambar', 'public');
+                $gambarUrl  = url('storage/' . $gambarPath);
             }
 
             $konten = $request->konten ? ['html' => $request->konten] : [];
+
+            $tanggal = $request->filled('tanggal')
+                ? $request->tanggal
+                : $workshop->tanggal;
+
             $workshop->update([
                 'id_tahun' => $tahunWorkshop->id,
                 'title'    => $request->title,
                 'lokasi'   => $request->lokasi,
-                'tanggal'  => $request->tanggal,
-                'gambar'   => $gambarPath,
+                'tanggal'  => $tanggal,
+                'gambar'   => $gambarUrl,
                 'konten'   => $konten,
             ]);
 
@@ -175,14 +196,8 @@ class WorkshopController extends Controller
                 ->with('success', 'Workshop berhasil diperbarui!');
 
         } catch (\Throwable $e) {
-
             DB::rollBack();
-
-            if ($e instanceof \Illuminate\Database\QueryException  &&
-                $e->errorInfo[1] == 1062) {
-                return back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
-            }
-            return back()->with('error', 'Terjadi kesalahan saat memproses data!' . $e->getMessage());
+            return back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
         }
     }
 
